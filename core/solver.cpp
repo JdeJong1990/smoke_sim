@@ -36,5 +36,5 @@ InterpolationWeights computeWeights(Grid& grid, float dt){
 }
 
 void interpolateField(Grid& grid, InterpolationWeights weigths){
-    //Interpolate between cells that influence the cell of interest.
+    //Interpolate between cells four that influence the cell of interest.
 }
