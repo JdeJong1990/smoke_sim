@@ -1,5 +1,6 @@
 #pragma once
 #include "grid.hpp"
+#include "InterpolationWeights.hpp"
 
 class Solver {
 public:
@@ -7,6 +8,12 @@ public:
 
 private:
     void swapPointers(Grid& grid);
-    void flowTransform(Grid& grid, float dt)
+    void applyAdvection(Grid& grid, float dt);
+    InterpolationWeights computeWeights(int x, int y, Grid& grid, float dt);
+    void interpolateFields(Grid& grid, InterpolationWeights weigths);
+    void interpolateField(std::vector<float>& field, 
+                                std::vector<float>& field_next,     
+                                InterpolationWeights weights, 
+                                Grid grid);
 };
 

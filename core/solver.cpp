@@ -1,5 +1,8 @@
+#include "InterpolationWeights.hpp"
 #include "solver.hpp"
+#include <algorithm>
 #include <iostream>
+#include <cmath>
 
 void Solver::step(Grid& grid, float dt) {
     // Temporarily just write the old values to the new grid directly.
@@ -8,7 +11,7 @@ void Solver::step(Grid& grid, float dt) {
     //         grid.smoke_next[grid.idx(x,y)] = grid.smoke[grid.idx(x,y)];
     //     }
     // }
-    flowTransform(grid, dt);
+    applyAdvection(grid, dt);
 
     swapPointers(grid);
 }
@@ -23,18 +26,67 @@ void Solver::swapPointers(Grid& grid){
 }
 
 //semi-Lagrangian advection
-void applyAdvection(Grid& grid, float dt){
-    weights = computeWeights(grid, dt);
-    interpolateField(Grid, weights);
+void Solver::applyAdvection(Grid& grid, float dt){
+    for (int y = 0; y < grid.getHeight(); y++){
+        for (int x = 0; x < grid.getWidth(); x++){
+            InterpolationWeights weights = computeWeights(x, y, grid, dt);
+            interpolateFields(grid, weights);
+        }
+    }
 }
 
-InterpolationWeights computeWeights(Grid& grid, float dt){
-    
+InterpolationWeights Solver::computeWeights(int x, int y, Grid& grid, float dt){
+    float factor = 0.01;
+    float u = grid.u[grid.idx(x,y)];
+    float v = grid.v[grid.idx(x,y)];
+
+    int x_new = x - u*dt/grid.getCellScale() * factor;
+    int y_new = y - v*dt/grid.getCellScale() * factor;
+
+    x_new = std::max(x_new, 0);
+    x_new = std::min(x_new, grid.getWidth());
+    y_new = std::max(y_new, 0);
+    y_new = std::min(y_new, grid.getHeight());
+
     InterpolationWeights weights;
+
+    weights.x = x;
+    weights.y = y;
+
+    weights.x0 = std::floor(x_new);
+    weights.y0 = std::floor(y_new);
+    weights.x1 = std::min(weights.x0 + 1, grid.getWidth()-1);
+    weights.y1 = std::min(weights.y1 + 1, grid.getHeight() - 1);
+
+    float dx = x - weights.x0;
+    float dy = y - weights.y0;
+
+    weights.w00 = (1 - dx) * (1 - dy); 
+    weights.w01 = dx * (1 - dy);
+    weights.w10 = (1 - dx) * dy;
+    weights.w11 = dx * dy;
 
     return weights;
 }
 
-void interpolateField(Grid& grid, InterpolationWeights weigths){
-    //Interpolate between cells four that influence the cell of interest.
+void Solver::interpolateFields(Grid& grid, InterpolationWeights weights){
+    //Interpolate between cells four that influence the cell of interest. 
+    interpolateField(grid.u, grid.u_next, weights, grid);
+    interpolateField(grid.v, grid.v_next, weights, grid);
+    interpolateField(grid.smoke, grid.smoke_next, weights, grid);
+    interpolateField(grid.temperature, grid.temperature_next, weights, grid);
+    interpolateField(grid.mass, grid.mass_next, weights, grid);
+}
+
+void Solver::interpolateField(  std::vector<float>& field, 
+                                std::vector<float>& field_next,     
+                                InterpolationWeights weights, 
+                                Grid grid){
+    int x = weights.x;
+    int y = weights.y;
+
+    field_next[grid.idx(x,y)] = weights.w00*field[grid.idx(weights.x0, weights.y0)]+
+                                weights.w01*field[grid.idx(weights.x0, weights.y1)]+
+                                weights.w10*field[grid.idx(weights.x1, weights.y0)]+
+                                weights.w11*field[grid.idx(weights.x1, weights.y1)];
 }
