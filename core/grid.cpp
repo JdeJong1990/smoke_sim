@@ -1,7 +1,7 @@
 #include "grid.hpp"
 #include <iostream>
 
-Grid::Grid(int width, int height)
+Grid::Grid(int width, int height, float cellScale)
     : width_(width), height_(height),
     cellScale_(cellScale),
     u(width * height, 0.0f),
@@ -21,7 +21,10 @@ Grid::Grid(int width, int height)
   for (int y = height/2 - 10; y < height/2+10; y++) {
       for (int x = width/2 - 10; x < width/2+10; x++) {
         smoke[idx(x, y)] = 1.0f;
+        smoke_next[idx(x,y)]= 1.0f;
+
         u[idx(x,y)] = 1.0f;
+        u_next[idx(x,y)] = 1.0f;
     }
   }
 }
