@@ -3,11 +3,12 @@
 
 class Grid {
 public:
-    Grid(int width, int height);
+    Grid(int width, int height, float cellScale);
 
     int getWidth() const { return width_; }
     int getHeight() const { return height_; }
-
+    float getCellScale() const{ return cellScale_; }
+ 
     inline int idx(int x, int y) const { return y * width_ + x; }
 
     std::vector<float> u;           // horizontal velocity
@@ -25,6 +26,7 @@ public:
     std::vector<float> mass_next;
 
 private:
+    float cellScale_;                // Width and height of a square cell in meters
     int width_;
     int height_;
 };
