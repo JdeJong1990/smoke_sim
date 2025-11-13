@@ -2,6 +2,7 @@
 #include "solver.hpp"
 #include <algorithm>
 #include <iostream>
+#include <iomanip>
 #include <cmath>
 
 void Solver::step(Grid& grid, float dt) {
@@ -36,34 +37,44 @@ void Solver::applyAdvection(Grid& grid, float dt){
 }
 
 InterpolationWeights Solver::computeWeights(int x, int y, Grid& grid, float dt){
-    float factor = 0.01;
+    float factor = 100.0;
     float u = grid.u[grid.idx(x,y)];
     float v = grid.v[grid.idx(x,y)];
 
-    int x_new = x - u*dt/grid.getCellScale() * factor;
-    int y_new = y - v*dt/grid.getCellScale() * factor;
+    float x_new = x - u*dt/grid.getCellScale() * factor;
+    float y_new = y - v*dt/grid.getCellScale() * factor;
 
-    x_new = std::max(x_new, 0);
-    x_new = std::min(x_new, grid.getWidth());
-    y_new = std::max(y_new, 0);
-    y_new = std::min(y_new, grid.getHeight());
+    if (x == 32 && y == 32){
+        std::cout <<"x: " << x << "\n";
+        std::cout <<"u: " << u << "\n";
+        std::cout <<"dt: "<< dt << "\n";
+        std::cout <<"cell scale: " << grid.getCellScale() << "\n";
+        std::cout <<"xnew: "<<x_new<<"\n\n";
+    }
+    float width = grid.getWidth();      //Define as float
+    float height = grid.getHeight();
+
+    x_new = std::max(x_new, 0.0f);
+    x_new = std::min(x_new, width - 1.0f);
+    y_new = std::max(y_new, 0.0f);
+    y_new = std::min(y_new, height - 1.0f);
 
     InterpolationWeights weights;
 
     weights.x = x;
     weights.y = y;
 
-    weights.x0 = std::floor(x_new);
-    weights.y0 = std::floor(y_new);
-    weights.x1 = std::min(weights.x0 + 1, grid.getWidth()-1);
-    weights.y1 = std::min(weights.y1 + 1, grid.getHeight() - 1);
+    weights.x0 = static_cast<int>(std::floor(x_new));
+    weights.y0 = static_cast<int>(std::floor(y_new));
+    weights.x1 = static_cast<int>(std::min(weights.x0 + 1, grid.getWidth() - 1));
+    weights.y1 = static_cast<int>(std::min(weights.y0 + 1, grid.getHeight() - 1));
 
-    float dx = x - weights.x0;
-    float dy = y - weights.y0;
+    float dx = x_new - weights.x0;
+    float dy = y_new - weights.y0;
 
     weights.w00 = (1 - dx) * (1 - dy); 
-    weights.w01 = dx * (1 - dy);
-    weights.w10 = (1 - dx) * dy;
+    weights.w01 = (1 - dx) * dy;
+    weights.w10 = dx * (1 - dy);
     weights.w11 = dx * dy;
 
     return weights;
@@ -76,17 +87,25 @@ void Solver::interpolateFields(Grid& grid, InterpolationWeights weights){
     interpolateField(grid.smoke, grid.smoke_next, weights, grid);
     interpolateField(grid.temperature, grid.temperature_next, weights, grid);
     interpolateField(grid.mass, grid.mass_next, weights, grid);
+    
+    if (weights.x == 32 && weights.y == 32) {
+        std::cout << std::fixed << std::setprecision(4);
+        std::cout << "Coordinate: " << weights.x << "," << weights.y << "\n"
+                << "("<<weights.x0<<","<<weights.x1<<","<<weights.y0<<","<<weights.y1<<")\n"
+                << "Weights: " << weights.w00 << ", " << weights.w01
+                << ", " << weights.w10 << ", " << weights.w11 << "\n";
+    }
 }
 
 void Solver::interpolateField(  std::vector<float>& field, 
                                 std::vector<float>& field_next,     
                                 InterpolationWeights weights, 
-                                Grid grid){
+                                Grid& grid){
     int x = weights.x;
     int y = weights.y;
 
     field_next[grid.idx(x,y)] = weights.w00*field[grid.idx(weights.x0, weights.y0)]+
                                 weights.w01*field[grid.idx(weights.x0, weights.y1)]+
                                 weights.w10*field[grid.idx(weights.x1, weights.y0)]+
-                                weights.w11*field[grid.idx(weights.x1, weights.y1)];
+                                weights.w11*field[grid.idx(weights.x1, weights.y1)];   
 }
