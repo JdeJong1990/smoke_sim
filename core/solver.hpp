@@ -14,6 +14,7 @@ private:
     void interpolateField(std::vector<float>& field, 
                                 std::vector<float>& field_next,     
                                 InterpolationWeights weights, 
-                                Grid grid);
+                                Grid& grid);
+    void updatePressure( Grid& grid, float dt);
 };
 

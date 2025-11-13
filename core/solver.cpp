@@ -14,6 +14,8 @@ void Solver::step(Grid& grid, float dt) {
     // }
     applyAdvection(grid, dt);
 
+    updatePressure(grid, dt);
+
     swapPointers(grid);
 }
 
@@ -108,4 +110,14 @@ void Solver::interpolateField(  std::vector<float>& field,
                                 weights.w01*field[grid.idx(weights.x0, weights.y1)]+
                                 weights.w10*field[grid.idx(weights.x1, weights.y0)]+
                                 weights.w11*field[grid.idx(weights.x1, weights.y1)];   
+}
+
+void Solver::updatePressure( Grid& grid, float dt){
+    for (int y = 0; y < grid.getHeight(); y++){
+        for (int x = 0; x < grid.getWidth(); x++){
+            int index = grid.idx(x,y);
+            float volume = std::pow(grid.getCellScale(), 3.0f);
+            grid.pressure[index] = grid.mass[index] / volume * grid.temperature[index];
+        }
+    }
 }
