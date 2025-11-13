@@ -8,7 +8,7 @@ Renderer::Renderer(int width, int height, int cellSize)
              "Grid Simulation"),
       cellSize(cellSize)
 {
-    window.setFramerateLimit(60);           // Set frame rate limit
+    window.setFramerateLimit(1);           // Set frame rate limit
 }
 
 void Renderer::pollEvents() {
@@ -31,7 +31,7 @@ void Renderer::draw(const Grid& grid) {
             );
             cellShape.setPosition(sf::Vector2f(x * cellSize, y * cellSize));
 
-            float value = grid.smoke[grid.idx(x, y)];
+            float value = grid.smoke[grid.idx(x, grid.getHeight() -1 - y)];
             uint8_t colorValue = static_cast<uint8_t>(value * 255);
             cellShape.setFillColor(sf::Color(colorValue, colorValue, colorValue));
 
