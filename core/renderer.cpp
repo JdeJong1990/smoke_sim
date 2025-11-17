@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <iostream>
 
-
 Renderer::Renderer(int width, int height, int cellSize)
     : window(sf::VideoMode({static_cast<unsigned int>(width * cellSize),
                             static_cast<unsigned int>(height * cellSize)}),
@@ -26,9 +25,16 @@ void Renderer::pollEvents() {
 
 void Renderer::draw(const Grid& grid, InputHandler& input) {
     window.clear(sf::Color::Black);
-    if (input.isDown(sf::Keyboard::Key::A)){
-        std::cout << "A";
+    if (input.isDown(sf::Keyboard::Key::V)){
+        render_mode = 'V';
+        std::cout << "Render mode is now V\n";
     }
+    if (input.isDown(sf::Keyboard::Key::S)){
+        render_mode = 'S';
+        std::cout << "Render mode is now S\n";
+    }
+
+    
     for (int y = 0; y < grid.getHeight(); ++y) {
         for (int x = 0; x < grid.getWidth(); ++x) {
             sf::RectangleShape cellShape(
@@ -37,14 +43,23 @@ void Renderer::draw(const Grid& grid, InputHandler& input) {
             );
             cellShape.setPosition(sf::Vector2f(x * cellSize, y * cellSize));
 
-            float value = grid.smoke[grid.idx(x, grid.getHeight() -1 - y)];
+            float value;
+
+            switch(render_mode){
+                case 'V':
+                value = grid.v[grid.idx(x, grid.getHeight() -1 - y)];
+                break;
+                default: 
+                value = grid.smoke[grid.idx(x, grid.getHeight() -1 - y)];
+            }
+            
             uint8_t colorValue = static_cast<uint8_t>(value * 255);
             cellShape.setFillColor(sf::Color(colorValue, colorValue, colorValue));
 
             window.draw(cellShape);
         }
     }
-
+    std::cout << "Rendermode while rendering: " << render_mode << "\n";
     window.display();
 }
 

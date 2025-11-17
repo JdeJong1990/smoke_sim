@@ -11,6 +11,7 @@ public:
 
     bool isOpen() const { return window.isOpen(); }
 
+    char render_mode;
     sf::Window& getWindow();
 
 private:
