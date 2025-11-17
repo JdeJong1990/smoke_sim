@@ -1,6 +1,10 @@
-#include "renderer.hpp"
 #include <SFML/Graphics.hpp>
+#include <SFML/Window/Keyboard.hpp>
+#include "inputHandler.hpp"
+#include "renderer.hpp"
 #include <cstdint>
+#include <iostream>
+
 
 Renderer::Renderer(int width, int height, int cellSize)
     : window(sf::VideoMode({static_cast<unsigned int>(width * cellSize),
@@ -20,9 +24,11 @@ void Renderer::pollEvents() {
     }
 }
 
-void Renderer::draw(const Grid& grid) {
+void Renderer::draw(const Grid& grid, InputHandler& input) {
     window.clear(sf::Color::Black);
-
+    if (input.isDown(sf::Keyboard::Key::A)){
+        std::cout << "A";
+    }
     for (int y = 0; y < grid.getHeight(); ++y) {
         for (int x = 0; x < grid.getWidth(); ++x) {
             sf::RectangleShape cellShape(
@@ -40,4 +46,8 @@ void Renderer::draw(const Grid& grid) {
     }
 
     window.display();
+}
+
+sf::Window& Renderer::getWindow(){
+    return window;
 }
