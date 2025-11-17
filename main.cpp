@@ -1,6 +1,7 @@
 #include <iostream>
 #include <SFML/System/Clock.hpp>
 #include "core/grid.hpp"
+#include "core/inputHandler.hpp"
 #include "core/solver.hpp"
 #include "core/renderer.hpp"
 
@@ -13,18 +14,25 @@ int main() {
     sf::Clock fpsClock;
     int frameCount = 0;
 
-    Grid grid(width, height);
+    Grid grid(width, height, 1);
     Solver solver;
     Renderer renderer(width, height, 8);
+    InputHandler input;
 
     std::cout << "Starting simulation...\n";
 
     while (renderer.isOpen()) {
-        renderer.pollEvents();
+        input.update(renderer.getWindow());
 
+        if (input.isDown(sf::Keyboard::Key::A)) {
+            std::cout << "A is pressed\n";
+        }
         solver.step(grid, dt);
-        renderer.draw(grid);
-
+        
+        renderer.pollEvents();
+        renderer.draw(grid, input);
+        
+        
         frameCount++;
 
         // Print FPS once per second
