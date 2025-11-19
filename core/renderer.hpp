@@ -7,6 +7,8 @@ class Renderer {
 public:
     Renderer(int width, int height, int cellSize = 4);
     void draw(const Grid& grid, InputHandler& input);
+    void updateMode(InputHandler& input);
+    float sampleField(int x, int y, const Grid& grid);
     void pollEvents();
 
     bool isOpen() const { return window.isOpen(); }
