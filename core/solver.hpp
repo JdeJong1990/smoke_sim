@@ -17,5 +17,6 @@ private:
                                 Grid& grid);
     void updatePressure(Grid& grid, float dt);
     void updateVelocity(Grid& grid, float dt);
+    void updateMass(Grid& grid, float dt);
 };
 

@@ -6,28 +6,17 @@
 #include <cmath>
 
 void Solver::step(Grid& grid, float dt) {
-
     applyAdvection(grid, dt);
 
     updatePressure(grid, dt);
 
     updateVelocity(grid, dt);
 
-    swapPointers(grid);
+    updateMass(grid, dt);
+
+    swapPointers(grid);    
 }
 
-void Solver::updateVelocity(Grid& grid, float dt){
-    for (int y = 0; y < grid.getHeight(); y++){
-        for (int x = 0; x < grid.getWidth(); x++){
-            int current = grid.idx(x , y);
-            int right = grid.idx((x+1) % grid.getWidth(), y);
-            int up = grid.idx(x, (y+1) % grid.getHeight());
-
-            grid.u_next[current] = grid.u[current] + (grid.pressure[current] - grid.pressure[right]) / grid.mass[current]*grid.getCellScale()*grid.getCellScale()*dt;
-            grid.v_next[current] = grid.v[current] + (grid.pressure[current] - grid.pressure[up]) / grid.mass[current]*grid.getCellScale()*grid.getCellScale()*dt;
-        }
-    }
-}
 void Solver::swapPointers(Grid& grid){
     std::swap(grid.u, grid.u_next);
     std::swap(grid.v, grid.v_next);
@@ -42,6 +31,7 @@ void Solver::applyAdvection(Grid& grid, float dt){
     for (int y = 0; y < grid.getHeight(); y++){
         for (int x = 0; x < grid.getWidth(); x++){
             InterpolationWeights weights = computeWeights(x, y, grid, dt);
+
             interpolateFields(grid, weights);
         }
     }
@@ -51,17 +41,11 @@ InterpolationWeights Solver::computeWeights(int x, int y, Grid& grid, float dt){
     float factor = 100.0;
     float u = grid.u[grid.idx(x,y)];
     float v = grid.v[grid.idx(x,y)];
-
+    if (u>10 || u < -10 || v> 10 || v<-10){
+        std::cout <<"Velocity is: u=" << u << ", v = " << v << "\n";
+    }
     float x_new = x - u*dt/grid.getCellScale() * factor;
     float y_new = y - v*dt/grid.getCellScale() * factor;
-
-    // if (x == 32 && y == 32){
-    //     std::cout <<"x: " << x << "\n";
-    //     std::cout <<"u: " << u << "\n";
-    //     std::cout <<"dt: "<< dt << "\n";
-    //     std::cout <<"cell scale: " << grid.getCellScale() << "\n";
-    //     std::cout <<"xnew: "<<x_new<<"\n\n";
-    // }
     float width = grid.getWidth();      //Define as float
     float height = grid.getHeight();
 
@@ -80,6 +64,15 @@ InterpolationWeights Solver::computeWeights(int x, int y, Grid& grid, float dt){
     weights.x1 = static_cast<int>(std::min(weights.x0 + 1, grid.getWidth() - 1));
     weights.y1 = static_cast<int>(std::min(weights.y0 + 1, grid.getHeight() - 1));
 
+    if (x > grid.getWidth()|| weights.x0  > grid.getWidth()|| weights.x1 > grid.getWidth()|| weights.y0 > grid.getHeight()|| weights.y1 > grid.getHeight() ){
+        std::cout << "WARNING: interpolationWeights contains an out of bounds value: x = " << x << ", y = " << y  << ", x0 = " << weights.x0 << ", x1 = " << weights.x1 << ", y0 = " << weights.y0 << ", y1 = " << weights.y1 <<"\n";
+        std::cout <<"Velocity is: u=" << u << ", v = " << v << "\n";
+    }
+    if (x < 0 || y < 0 || weights.x0 < 0 || weights.x1 < 0 || weights.y0 < 0 || weights.y1 < 0){
+        std::cout << "WARNING: interpolationWeights contains an out of bounds value: x = " << x << ", y = " << y  << ", x0 = " << weights.x0 << ", x1 = " << weights.x1 << ", y0 = " << weights.y0 << ", y1 = " << weights.y1 <<"\n";
+        std::cout <<"Velocity is: u=" << u << ", v = " << v << "\n";
+    }
+
     float dx = x_new - weights.x0;
     float dy = y_new - weights.y0;
 
@@ -92,7 +85,8 @@ InterpolationWeights Solver::computeWeights(int x, int y, Grid& grid, float dt){
 }
 
 void Solver::interpolateFields(Grid& grid, InterpolationWeights weights){
-    //Interpolate between cells four that influence the cell of interest. 
+    //Interpolate between cells four that influence the cell of interest.
+    // std::cout << "Weights: "<<weights.x<<","<<weights.y<<","<<weights.x0<<","<<weights.x1<<","<<weights.y0<<","<<weights.y1<<"\n"; 
     interpolateField(grid.u, grid.u_next, weights, grid);
     interpolateField(grid.v, grid.v_next, weights, grid);
     interpolateField(grid.smoke, grid.smoke_next, weights, grid);
@@ -127,6 +121,60 @@ void Solver::updatePressure( Grid& grid, float dt){
             int index = grid.idx(x,y);
             float volume = std::pow(grid.getCellScale(), 3.0f);
             grid.pressure[index] = grid.mass[index] / volume * grid.temperature[index];
+        }
+    }
+}
+
+void Solver::updateVelocity(Grid& grid, float dt){
+    for (int y = 0; y < grid.getHeight(); y++){
+        for (int x = 0; x < grid.getWidth(); x++){
+            int current = grid.idx(x , y);
+            int right = grid.idx((x+1) % grid.getWidth(), y);
+            int up = grid.idx(x, (y+1) % grid.getHeight());
+
+            if(current<0 || right <0 || up <0|| current> grid.getWidth()*grid.getHeight()|| right> grid.getWidth()*grid.getHeight()|| up> grid.getWidth()*grid.getHeight()){
+                std::cout << "Index out of bounds in updateVelocity! x=" << x << " y=" << y 
+                    << " current=" << current << " right=" << right 
+                    << " up=" << up << "\n";
+            }
+
+            if (x == 42 && y == 25){
+                std::cout << std::fixed << std::setprecision(4);
+                std::cout <<"grid.v[current] = " << grid.v[current] << "\n";
+                std::cout <<"grid.mass[current] = " << grid.mass[current] << "\n";
+                std::cout <<"Mass delta: " << (grid.pressure[current] - grid.pressure[right]) / std::max(grid.mass[current], 0.01f) * grid.getCellScale() * grid.getCellScale() * dt <<"\n\n";
+                
+            }
+
+            grid.u_next[current] = grid.u[current] + (grid.pressure[current] - grid.pressure[right]) / std::max(grid.mass[current], 0.01f) * grid.getCellScale() * grid.getCellScale() * dt;
+            grid.v_next[current] = grid.v[current] + (grid.pressure[current] - grid.pressure[up]) / std::max(grid.mass[current], 0.01f) * grid.getCellScale() * grid.getCellScale() * dt;
+        }
+    }
+}
+
+void Solver::updateMass(Grid& grid, float dt){
+    for (int y = 0; y < grid.getHeight(); y++){
+        for (int x = 0; x < grid.getWidth(); x++){
+            int current = grid.idx(x , y);
+            int left = grid.idx((x-1 + grid.getWidth()) % grid.getWidth(), y);
+            int down = grid.idx(x, (y-1 + grid.getHeight()) % grid.getHeight());
+            
+            if(current<0 || left <0 || down <0|| current> grid.getWidth()*grid.getHeight()|| left > grid.getWidth()*grid.getHeight()|| down> grid.getWidth()*grid.getHeight()){
+            
+                std::cout << "Out of bounds! x=" << x << " y=" << y 
+                    << " current=" << current << " left=" << left 
+                    << " down=" << down << "\n";
+            }
+
+            grid.mass_next[current] = grid.mass[current] + 
+                                        (grid.mass[left]*grid.u[left]
+                                        - grid.mass[current]*grid.u[current]
+                                        + grid.mass[down]*grid.v[down]
+                                        - grid.mass[current]*grid.v[current]
+                                        )/grid.getCellScale();
+            
+            grid.mass_next[current] = std::clamp(grid.mass_next[current], 0.0f, 10.0f);
+
         }
     }
 }
