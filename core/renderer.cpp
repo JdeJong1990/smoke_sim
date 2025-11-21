@@ -2,6 +2,7 @@
 #include <SFML/Window/Keyboard.hpp>
 #include "inputHandler.hpp"
 #include "renderer.hpp"
+#include "rgb.hpp"
 #include <cstdint>
 #include <iostream>
 
@@ -11,7 +12,7 @@ Renderer::Renderer(int width, int height, int cellSize)
              "Grid Simulation"),
       cellSize(cellSize)
 {
-    window.setFramerateLimit(1);           // Set frame rate limit
+    window.setFramerateLimit(60);           // Set frame rate limit
 }
 
 void Renderer::pollEvents() {
@@ -35,15 +36,14 @@ void Renderer::draw(const Grid& grid, InputHandler& input) {
             );
             cellShape.setPosition(sf::Vector2f(x * cellSize, y * cellSize));
 
-            float value = sampleField(x,y, grid);
+            RGB color = sampleField(x,y, grid);
             
-            uint8_t colorValue = static_cast<uint8_t>(value * 255);
-            cellShape.setFillColor(sf::Color(colorValue, colorValue, colorValue));
+            // uint8_t colorValue = static_cast<uint8_t>(value * 255);
+            cellShape.setFillColor(sf::Color(color.r, color.g, color.b));
 
             window.draw(cellShape);
         }
     }
-    
     window.display();
 }
 
@@ -63,28 +63,36 @@ void Renderer::updateMode(InputHandler& input){
     }
 }
 
-float Renderer::sampleField(int x, int y, const Grid& grid){
-    float value;
+RGB Renderer::sampleField(int x, int y, const Grid& grid){
+    int index = grid.idx(x, grid.getHeight() - 1 - y);
+    RGB color(1);
+
     switch(render_mode){
-        case 'V':
-        value = grid.v[grid.idx(x, grid.getHeight() -1 - y)];
+        case 'V':{
+        color = RGB(grid.v[index] * 255);
         break;
-        case 'U':
-        value = grid.u[grid.idx(x, grid.getHeight() -1 - y)];
+        }
+        case 'U':{
+        color = RGB(grid.u[index] * 255);
         break;
-        case 'P':
-        value = grid.pressure[grid.idx(x, grid.getHeight() -1 - y)];
+        }
+        case 'P':{
+        color = RGB(grid.pressure[index] * 255);
         break;
-        case 'T':
-        value = grid.temperature[grid.idx(x, grid.getHeight() -1 - y)];
+        }
+        case 'T':{
+        color = RGB(grid.temperature[index] * 255);
         break;
-        case 'M':
-        value = grid.mass[grid.idx(x, grid.getHeight() -1 - y)];
+        }
+        case 'M':{
+        color = RGB(grid.mass[index] * 255);
         break;
-        default: 
-        value = grid.smoke[grid.idx(x, grid.getHeight() -1 - y)];
+        }
+        default:{
+        color = RGB(grid.smoke[index] * 255);
+        }
     }
-    return value;
+    return color;
 }
 
 sf::Window& Renderer::getWindow(){
