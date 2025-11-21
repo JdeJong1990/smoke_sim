@@ -1,3 +1,6 @@
+#pragma once
+#ifndef RGB_HPP
+#define RGB_HPP
 #include <cstdint>
 #include <algorithm>
 
@@ -17,3 +20,6 @@ struct RGB {
         b = std::clamp(b_in, 0, 255);
     }
 };
+
+
+#endif
