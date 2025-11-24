@@ -2,8 +2,21 @@
 #include "grid.hpp"
 #include "InterpolationWeights.hpp"
 
+/**
+* @brief Calculate progress of time for a Grid object, based on physics.
+* 
+* Usage: 
+* Solver solver;
+* solver.step(grid, dt);
+*/
 class Solver {
 public:
+    /**
+    * @brief Calculate the next time step in the simulation.
+    * 
+    * @param grid   Grid object containing physical data. 
+    * @param dt     Duration of a time step.
+    */
     void step(Grid& grid, float dt);
 
 private:
