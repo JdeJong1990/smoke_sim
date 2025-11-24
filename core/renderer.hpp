@@ -33,6 +33,10 @@ public:
     /// @brief Samples one of the fields of a Grid object, on a given coordinate, based on the render_mode.
     RGB sampleField(int x, int y, const Grid& grid);
 
+    RGB sampleVelocity(int x, int y, const Grid& grid);
+
+    RGB velocityColor(float u, float v);
+
     void pollEvents();
 
     bool isOpen() const { return window.isOpen(); }
