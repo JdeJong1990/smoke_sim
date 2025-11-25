@@ -30,7 +30,6 @@ public:
 
     std::vector<float> u_next;
     std::vector<float> v_next;
-    std::vector<float> pressure_next;
     std::vector<float> smoke_next;
     std::vector<float> temperature_next;
     std::vector<float> mass_next;

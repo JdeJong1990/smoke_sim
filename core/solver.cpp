@@ -20,7 +20,6 @@ void Solver::step(Grid& grid, float dt) {
 void Solver::swapPointers(Grid& grid){
     std::swap(grid.u, grid.u_next);
     std::swap(grid.v, grid.v_next);
-    std::swap(grid.pressure, grid.pressure_next);
     std::swap(grid.smoke, grid.smoke_next);
     std::swap(grid.temperature, grid.temperature_next);
     std::swap(grid.mass, grid.mass_next);
@@ -38,7 +37,7 @@ void Solver::applyAdvection(Grid& grid, float dt){
 }
 
 InterpolationWeights Solver::computeWeights(int x, int y, Grid& grid, float dt){
-    float factor = 3.0;
+    float factor = 2.0;
     float u = grid.u[grid.idx(x,y)];
     float v = grid.v[grid.idx(x,y)];
     float width = grid.getWidth();
