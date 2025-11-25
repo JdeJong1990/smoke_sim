@@ -137,8 +137,17 @@ void Solver::updateVelocity(Grid& grid, float dt){
                     << " current=" << current << " right=" << right 
                     << " up=" << up << "\n";
             }
-            grid.u_next[current] = grid.u[current] + (grid.pressure[current] - grid.pressure[right]) / std::max(grid.mass[current], 0.01f) * grid.getCellScale() * grid.getCellScale() * dt;
-            grid.v_next[current] = grid.v[current] + (grid.pressure[current] - grid.pressure[up]) / std::max(grid.mass[current], 0.01f) * grid.getCellScale() * grid.getCellScale() * dt;
+
+            float new_u = grid.u[current] + (grid.pressure[current] - grid.pressure[right]) / std::max(grid.mass[current], 0.01f) * grid.getCellScale() * grid.getCellScale() * dt;
+            float new_v = grid.v[current] + (grid.pressure[current] - grid.pressure[up]) / std::max(grid.mass[current], 0.01f) * grid.getCellScale() * grid.getCellScale() * dt;
+
+            float magnitude = std::sqrt(new_u*new_u + new_v*new_v);
+            if (magnitude > 1){
+                new_u /= magnitude;
+                new_v /= magnitude;
+            }
+            grid.u_next[current] = new_u;
+            grid.v_next[current] = new_v;
         }
     }
 }
