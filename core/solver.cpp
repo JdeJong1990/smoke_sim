@@ -38,19 +38,25 @@ void Solver::applyAdvection(Grid& grid, float dt){
 }
 
 InterpolationWeights Solver::computeWeights(int x, int y, Grid& grid, float dt){
-    float factor = 10.0;
+    float factor = 3.0;
     float u = grid.u[grid.idx(x,y)];
     float v = grid.v[grid.idx(x,y)];
-    if (u>10 || u < -10 || v> 10 || v<-10){
-        std::cout <<"Velocity is: u=" << u << ", v = " << v << "\n";
+    float width = grid.getWidth();
+    float height = grid.getHeight();
+
+    if (u>1 || u < -1 || v> 1 || v<-1){
+        std::cout <<"Velocity is: u=" << u << ", v = " << v << ". Magnitude corrected.\n";
+        float magnitude = std::sqrt(u*u + v*v);
+        u = u/magnitude;
+        v = v/magnitude;
     }
+
     float x_new = x - u*dt/grid.getCellScale() * factor;
     float y_new = y - v*dt/grid.getCellScale() * factor;
+
     if ((x_new - x) >1.0f || (y_new -y)>1.0f){
         std::cout << "WARNING: interpolation length to large in Solver::computeWeights.("<< x <<" , " << y <<")\n";
     }
-    float width = grid.getWidth();      //Define as float
-    float height = grid.getHeight();
 
     x_new = std::max(x_new, 0.0f);
     x_new = std::min(x_new, width - 1.0f);
@@ -110,7 +116,7 @@ void Solver::interpolateField(  std::vector<float>& field,
 }
 
 void Solver::updatePressure( Grid& grid, float dt){
-    float R = 0.01f;
+    float R = 0.001f;
     float volume = std::pow(grid.getCellScale(), 3.0f);
     for (int y = 0; y < grid.getHeight(); y++){
         for (int x = 0; x < grid.getWidth(); x++){
