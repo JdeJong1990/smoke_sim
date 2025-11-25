@@ -7,6 +7,9 @@
 
 void Solver::step(Grid& grid, float dt) {
     applyAdvection(grid, dt);
+    swapPointers(grid);   
+
+    updateSmoke(grid, dt);
 
     updatePressure(grid, dt);
 
@@ -114,6 +117,10 @@ void Solver::interpolateField(  std::vector<float>& field,
                                 weights.w11*field[grid.idx(weights.x1, weights.y1)];   
 }
 
+void Solver::updateSmoke(Grid& grid, float dt){
+    std::swap(grid.smoke, grid.smoke_next);
+}
+
 void Solver::updatePressure( Grid& grid, float dt){
     float R = 0.001f;
     float volume = std::pow(grid.getCellScale(), 3.0f);
@@ -170,10 +177,11 @@ void Solver::updateMass(Grid& grid, float dt){
                     << " down=" << down << "\n";
             }
 
-            float max_right = std::min(grid.mass[right] , grid.mass[current]) / 8.0f;
-            float max_left = std::min(grid.mass[current] , grid.mass[left]) / 8.0f;
-            float max_up = std::min(grid.mass[up] , grid.mass[current]) / 8.0f;
-            float max_down = std::min(grid.mass[current] , grid.mass[down]) / 8.0f;
+            float divider = 128.0f;
+            float max_right = std::min(grid.mass[right] , grid.mass[current]) / divider;
+            float max_left = std::min(grid.mass[current] , grid.mass[left]) / divider;
+            float max_up = std::min(grid.mass[up] , grid.mass[current]) / divider;
+            float max_down = std::min(grid.mass[current] , grid.mass[down]) / divider;
             
             grid.mass_next[current] = grid.mass[current] + (
                                         + std::clamp(std::max(grid.mass[current], grid.mass[left]) * grid.u[left] * dt, -max_left, max_left)
