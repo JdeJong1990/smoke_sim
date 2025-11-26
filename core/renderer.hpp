@@ -37,6 +37,7 @@ public:
 
     RGB velocityColor(float u, float v);
 
+    /// @brief Check if the window is closed.
     void pollEvents();
 
     bool isOpen() const { return window.isOpen(); }
